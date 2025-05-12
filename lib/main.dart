@@ -4,6 +4,8 @@ import 'package:gmw_protocol/core/theme/theme.dart';
 import 'package:gmw_protocol/data/theme_datasource.dart';
 import 'package:gmw_protocol/domain/controller/theme_controller.dart';
 import 'package:gmw_protocol/presentation/pages/home.dart';
+import 'package:gmw_protocol/presentation/pages/login.dart';
+import 'package:gmw_protocol/presentation/pages/register.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -32,7 +34,13 @@ class GMWApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'GMW Protocol App',
           theme: themeController.isDark ? darkMode : lightMode,
-          home: const HomePage(),
+          routes: {
+            '/home': (BuildContext context) => const HomePage(),
+            '/login': (BuildContext context) => const LoginPage(),
+            '/register': (BuildContext context) => const RegisterPage(),
+            // '/home': (BuildContext context) => const HomePage(),
+          },
+          home: const RegisterPage(),
         );
       },
     );
