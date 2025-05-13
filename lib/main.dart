@@ -32,6 +32,10 @@ class GMWApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'GMW Protocol App',
           theme: themeController.isDark ? darkMode : lightMode,
+          routes: {
+            '/home': (BuildContext context) => const HomePage(),
+            // '/home': (BuildContext context) => const HomePage(),
+          },
           home: const HomePage(),
         );
       },
