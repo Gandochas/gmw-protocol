@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 final lightMode = ThemeData(
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(surface: Colors.purple[100]!, primary: Colors.purple[400]!),
+  colorScheme: ColorScheme.light(
+    surface: const Color.fromARGB(255, 243, 205, 224),
+    primary: const Color.fromARGB(255, 206, 142, 163),
+    outline: Colors.pink[900],
+  ),
 );
 
 final darkMode = ThemeData(

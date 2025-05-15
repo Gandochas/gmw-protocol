@@ -31,9 +31,10 @@ class HomePage extends StatelessWidget {
           actions: [
             IconButton(onPressed: () => unawaited(_openSettingsMenu(context)), icon: const Icon(Icons.settings)),
           ],
-          bottom: const TabBar(tabs: [Tab(text: 'Alice'), Tab(text: 'Bob')]),
+          bottom: TabBar(tabs: const [Tab(text: 'Alice'), Tab(text: 'Bob')], labelColor: Theme.of(context).hintColor),
         ),
         body: const TabBarView(children: [AliceScreen(), BobScreen()]),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
     );
   }
@@ -148,13 +149,14 @@ class _AliceScreenState extends State<AliceScreen> with AutomaticKeepAliveClient
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                _protocolController.aliceCalculate(_aliceSecretController.text, _selectedCircuit);
+                unawaited(_protocolController.aliceCalculate(_aliceSecretController.text, _selectedCircuit));
               },
-              style: const ButtonStyle(fixedSize: WidgetStatePropertyAll(Size(180, 120))),
-              child: const Text('Calculate', style: TextStyle(fontSize: 26)),
+              style: ButtonStyle(
+                fixedSize: const WidgetStatePropertyAll(Size(180, 120)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).focusColor),
+              ),
+              child: Text('Calculate', style: TextStyle(fontSize: 26, color: Theme.of(context).hintColor)),
             ),
-            // const SizedBox(height: 30),
-            // Text('Текущий статус: ${_protocolController.status}'),
             const SizedBox(height: 30),
             if (_protocolController.aliceResult != null) Text('Alice output: ${_protocolController.aliceResult}'),
           ],
@@ -268,10 +270,13 @@ class _BobScreenState extends State<BobScreen> with AutomaticKeepAliveClientMixi
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                _protocolController.bobCalculate(_bobSecretController.text, _selectedCircuit);
+                unawaited(_protocolController.bobCalculate(_bobSecretController.text, _selectedCircuit));
               },
-              style: const ButtonStyle(fixedSize: WidgetStatePropertyAll(Size(180, 120))),
-              child: const Text('Calculate', style: TextStyle(fontSize: 26)),
+              style: ButtonStyle(
+                fixedSize: const WidgetStatePropertyAll(Size(180, 120)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).focusColor),
+              ),
+              child: Text('Calculate', style: TextStyle(fontSize: 26, color: Theme.of(context).hintColor)),
             ),
             // const SizedBox(height: 30),
             // Text('Текущий статус: ${_protocolController.status}'),
@@ -294,10 +299,11 @@ class CircuitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: isSelected ? 8 : 2,
+      color: Theme.of(context).focusColor,
       shape:
           isSelected
               ? RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).highlightColor, width: 2),
+                side: BorderSide(color: Theme.of(context).hintColor, width: 2),
                 borderRadius: BorderRadius.circular(8),
               )
               : null,
