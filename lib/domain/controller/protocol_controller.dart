@@ -3,17 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:gmw_protocol/domain/gmw/gmw.dart';
 
-class ProtocolController extends ChangeNotifier {
+class ProtocolController with ChangeNotifier {
   ProtocolController({required this.aliceSession, required this.bobSession});
 
   final GMWSession aliceSession;
   final GMWSession bobSession;
 
-  // String _status = 'Не запущено';
   BitSequence? _aliceResult;
   BitSequence? _bobResult;
 
-  // String get status => _status;
   BitSequence? get aliceResult => _aliceResult;
   BitSequence? get bobResult => _bobResult;
 
@@ -45,9 +43,6 @@ class ProtocolController extends ChangeNotifier {
   }
 
   Future<void> _runBoth() async {
-    // _status = 'Отправка долей...';
-    // notifyListeners();
-
     final aliceBits = _numberToBinSequence(_aliceSecret);
     final bobBits = _numberToBinSequence(_bobSecret);
 
@@ -64,13 +59,7 @@ class ProtocolController extends ChangeNotifier {
       ),
     ]);
 
-    // _status = 'Вычисление схемы';
-    // notifyListeners();
-
     await Future.wait([aliceSession.run(circuit: _aliceCircuit!), bobSession.run(circuit: _bobCircuit!)]);
-
-    // _status = 'Получение результатов';
-    // notifyListeners();
 
     final results = await Future.wait([
       aliceSession.getResult(myOutputWire: _aliceCircuit!.outputWires.single),
@@ -80,12 +69,13 @@ class ProtocolController extends ChangeNotifier {
     _aliceResult = results[0];
     _bobResult = results[1];
 
-    // _status = 'Готово';
     notifyListeners();
 
     _aliceReady = _bobReady = false;
   }
 
-  BitSequence _numberToBinSequence(String str) =>
-      BitSequence(int.parse(str).toRadixString(2).split('').map(int.parse).toList());
+  BitSequence _numberToBinSequence(String str) {
+    // return BitSequence(int.parse(str).toRadixString(2).split('').map(int.parse).toList());
+    return BitSequence(str.split('').map(int.parse).toList());
+  }
 }
