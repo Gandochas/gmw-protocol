@@ -85,9 +85,10 @@ class _AliceScreenState extends State<AliceScreen> with AutomaticKeepAliveClient
 
     aliceCircuit3 = Circuit(
       gates: [
+        AndGate(inputs: [WireId('a'), WireId('b')], output: WireId('and_out')),
         NotGate(inputs: [WireId('a')], output: WireId('not_a')),
-        XorGate(inputs: [WireId('not_a'), WireId('b')], output: WireId('xor_out')),
-        AndGate(inputs: [WireId('xor_out'), WireId('b')], output: WireId('out')),
+        AndGate(inputs: [WireId('not_a'), WireId('b')], output: WireId('not_out')),
+        XorGate(inputs: [WireId('and_out'), WireId('not_out')], output: WireId('out')),
       ],
       inputWires: [WireId('a'), WireId('b')],
       outputWires: [WireId('out')],
@@ -130,17 +131,17 @@ class _AliceScreenState extends State<AliceScreen> with AutomaticKeepAliveClient
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircuitCard(
-                  label: 'Card 1',
+                  label: '((not a) xor b) and b',
                   isSelected: _selectedCircuit == aliceCircuit1,
                   onTap: () => setState(() => _selectedCircuit = aliceCircuit1),
                 ),
                 CircuitCard(
-                  label: 'Card 2 (a OR b)',
+                  label: 'a OR b',
                   isSelected: _selectedCircuit == aliceCircuit2,
                   onTap: () => setState(() => _selectedCircuit = aliceCircuit2),
                 ),
                 CircuitCard(
-                  label: 'Card 3',
+                  label: '(a and b) xor (not a and not b)',
                   isSelected: _selectedCircuit == aliceCircuit3,
                   onTap: () => setState(() => _selectedCircuit = aliceCircuit3),
                 ),
@@ -158,7 +159,8 @@ class _AliceScreenState extends State<AliceScreen> with AutomaticKeepAliveClient
               child: Text('Calculate', style: TextStyle(fontSize: 26, color: Theme.of(context).hintColor)),
             ),
             const SizedBox(height: 30),
-            if (_protocolController.aliceResult != null) Text('Alice output: ${_protocolController.aliceResult}'),
+            if (_protocolController.aliceResult != null)
+              Text('Alice output: ${_protocolController.aliceResult}', style: const TextStyle(fontSize: 20)),
           ],
         ),
       ),
@@ -208,12 +210,15 @@ class _BobScreenState extends State<BobScreen> with AutomaticKeepAliveClientMixi
     );
     bobCircuit3 = Circuit(
       gates: [
-        XorGate(inputs: [WireId('a'), WireId('b')], output: WireId('xor_out')),
-        AndGate(inputs: [WireId('xor_out'), WireId('b')], output: WireId('out')),
+        AndGate(inputs: [WireId('a'), WireId('b')], output: WireId('and_out')),
+        NotGate(inputs: [WireId('b')], output: WireId('not_b')),
+        AndGate(inputs: [WireId('a'), WireId('not_b')], output: WireId('not_out')),
+        XorGate(inputs: [WireId('and_out'), WireId('not_out')], output: WireId('out')),
       ],
       inputWires: [WireId('b'), WireId('a')],
       outputWires: [WireId('out')],
     );
+
     _selectedCircuit = bobCircuit1;
   }
 
@@ -251,17 +256,17 @@ class _BobScreenState extends State<BobScreen> with AutomaticKeepAliveClientMixi
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircuitCard(
-                  label: 'Card 1',
+                  label: '((not a) xor b) and b',
                   isSelected: _selectedCircuit == bobCircuit1,
                   onTap: () => setState(() => _selectedCircuit = bobCircuit1),
                 ),
                 CircuitCard(
-                  label: 'Card 2 (a OR b)',
+                  label: 'a OR b',
                   isSelected: _selectedCircuit == bobCircuit2,
                   onTap: () => setState(() => _selectedCircuit = bobCircuit2),
                 ),
                 CircuitCard(
-                  label: 'Card 3',
+                  label: '(a and b) xor (not a and not b)',
                   isSelected: _selectedCircuit == bobCircuit3,
                   onTap: () => setState(() => _selectedCircuit = bobCircuit3),
                 ),
@@ -281,7 +286,8 @@ class _BobScreenState extends State<BobScreen> with AutomaticKeepAliveClientMixi
             // const SizedBox(height: 30),
             // Text('Текущий статус: ${_protocolController.status}'),
             const SizedBox(height: 30),
-            if (_protocolController.bobResult != null) Text('Bob output: ${_protocolController.bobResult}'),
+            if (_protocolController.bobResult != null)
+              Text('Bob output: ${_protocolController.bobResult}', style: const TextStyle(fontSize: 20)),
           ],
         ),
       ),
@@ -310,7 +316,11 @@ class CircuitCard extends StatelessWidget {
       child: InkWell(
         splashColor: Theme.of(context).splashFactory == InkSparkle.splashFactory ? Theme.of(context).splashColor : null,
         onTap: onTap,
-        child: SizedBox(width: 100, height: 80, child: Center(child: Text(label))),
+        child: SizedBox(
+          width: 300,
+          height: 60,
+          child: Center(child: Text(label, style: const TextStyle(fontSize: 18))),
+        ),
       ),
     );
   }

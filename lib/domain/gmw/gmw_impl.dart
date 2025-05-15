@@ -210,7 +210,10 @@ base class GMWSessionImpl implements GMWSession {
     required WireId myInputWire,
     required WireId peerInputWire,
   }) async {
+    final stopwatch = Stopwatch()..start();
     final shares = sharer.split(value: secret);
+    debugPrint('Split за ${stopwatch.elapsed.inMilliseconds} $me');
+    stopwatch.stop();
     _inputs[myInputWire] = shares.selfShare;
 
     unawaited(otProvider.send(receiver: peer, x0: shares.peerShare, x1: BitSequence.zeros(0)));
@@ -236,6 +239,10 @@ base class GMWSessionImpl implements GMWSession {
     unawaited(otProvider.send(receiver: peer, x0: myShare, x1: BitSequence.zeros(0)));
     final peerShare = await otProvider.receive(sender: peer, choiceBit: 0);
 
-    return sharer.reconstruct(selfShare: myShare, peerShare: peerShare);
+    final stopwatch2 = Stopwatch()..start();
+    final sharerr = sharer.reconstruct(selfShare: myShare, peerShare: peerShare);
+    debugPrint('Reconstruct за ${stopwatch2.elapsed.inMilliseconds} $me');
+    stopwatch2.stop();
+    return sharerr;
   }
 }

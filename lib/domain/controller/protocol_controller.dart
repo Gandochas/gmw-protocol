@@ -23,18 +23,24 @@ class ProtocolController with ChangeNotifier {
   String _bobSecret = '';
   Circuit? _bobCircuit;
 
-  void aliceCalculate(String secret, Circuit circuit) {
+  Future<void> aliceCalculate(String secret, Circuit circuit) async {
+    final aliceStopwatch = Stopwatch()..start();
     _aliceSecret = secret;
     _aliceCircuit = circuit;
     _aliceReady = true;
-    unawaited(_tryStart());
+    await _tryStart();
+    debugPrint('Alice calculations are done in: ${aliceStopwatch.elapsed.inMilliseconds}');
+    aliceStopwatch.stop();
   }
 
-  void bobCalculate(String secret, Circuit circuit) {
+  Future<void> bobCalculate(String secret, Circuit circuit) async {
+    final bobStopwatch = Stopwatch()..start();
     _bobSecret = secret;
     _bobCircuit = circuit;
     _bobReady = true;
-    unawaited(_tryStart());
+    await _tryStart();
+    debugPrint('Bob calculations are done in: ${bobStopwatch.elapsed.inMilliseconds}');
+    bobStopwatch.stop();
   }
 
   Future<void> _tryStart() async {
