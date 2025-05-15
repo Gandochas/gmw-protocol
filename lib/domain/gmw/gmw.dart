@@ -7,10 +7,10 @@ import 'package:meta/meta.dart';
 part 'gmw_impl.dart';
 
 /// Идентификатор участника протокола
-extension type ParticipantId(String id) {}
+extension type ParticipantId(String id) implements Object {}
 
 /// Идентификатор провода в булевой схеме
-extension type WireId(String id) {}
+extension type WireId(String id) implements Object {}
 
 /// Представляет последовательность бит (0 или 1).
 extension type BitSequence._(List<int> _bits) implements Iterable<int> {

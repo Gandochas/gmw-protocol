@@ -1,136 +1,162 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:gmw_protocol/core/di/service_locator.dart';
+import 'package:gmw_protocol/domain/controller/protocol_controller.dart';
 import 'package:gmw_protocol/domain/controller/theme_controller.dart';
+import 'package:gmw_protocol/domain/gmw/gmw.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final _firstController = TextEditingController();
-  final _secondController = TextEditingController();
-  final _functionController = TextEditingController();
-  final _initialX = Random().nextInt(2);
-  final _initialY = Random().nextInt(2);
-  String _aliceXShare = '';
-  String _bobXShare = '';
-  String _aliceYShare = '';
-  String _bobYShare = '';
-  int output = 0;
 
   Future<void> _openSettingsMenu(BuildContext context) {
     return showDialog(
       context: context,
       builder: (context) {
-        return const SettingDialog();
+        return const SettingsDialog();
       },
     );
   }
 
-  String _sum(String a, String b) {
-    try {
-      output = int.parse(a) + int.parse(b);
-    } on FormatException {
-      return 'Invalid input';
-    }
-    return output.toString();
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      initialIndex: 0,
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('GMW protocol'),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).primaryColor,
+          actions: [
+            IconButton(onPressed: () => unawaited(_openSettingsMenu(context)), icon: const Icon(Icons.settings)),
+          ],
+          bottom: const TabBar(tabs: [Tab(text: 'Alice'), Tab(text: 'Bob')]),
+        ),
+        body: const TabBarView(children: [AliceScreen(), BobScreen()]),
+      ),
+    );
+  }
+}
+
+class AliceScreen extends StatefulWidget {
+  const AliceScreen({super.key});
+
+  @override
+  State<AliceScreen> createState() => _AliceScreenState();
+}
+
+class _AliceScreenState extends State<AliceScreen> with AutomaticKeepAliveClientMixin<AliceScreen> {
+  late final ProtocolController _protocolController;
+  final _aliceSecretController = TextEditingController();
+  late Circuit _selectedCircuit;
+  late final Circuit aliceCircuit1;
+  late final Circuit aliceCircuit2;
+  late final Circuit aliceCircuit3;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _protocolController = kServiceLocator['protocolController']! as ProtocolController;
+    _protocolController.addListener(_onProtocolChanged);
+    aliceCircuit1 = Circuit(
+      gates: [
+        NotGate(inputs: [WireId('a')], output: WireId('not_a')),
+        XorGate(inputs: [WireId('not_a'), WireId('b')], output: WireId('xor_out')),
+        AndGate(inputs: [WireId('xor_out'), WireId('b')], output: WireId('out')),
+      ],
+      inputWires: [WireId('a'), WireId('b')],
+      outputWires: [WireId('out')],
+    );
+
+    aliceCircuit2 = Circuit(
+      gates: [
+        XorGate(inputs: [WireId('a'), WireId('b')], output: WireId('xor_out')),
+        AndGate(inputs: [WireId('a'), WireId('b')], output: WireId('and_out')),
+        XorGate(inputs: [WireId('xor_out'), WireId('and_out')], output: WireId('out')),
+      ],
+      inputWires: [WireId('a'), WireId('b')],
+      outputWires: [WireId('out')],
+    );
+
+    aliceCircuit3 = Circuit(
+      gates: [
+        NotGate(inputs: [WireId('a')], output: WireId('not_a')),
+        XorGate(inputs: [WireId('not_a'), WireId('b')], output: WireId('xor_out')),
+        AndGate(inputs: [WireId('xor_out'), WireId('b')], output: WireId('out')),
+      ],
+      inputWires: [WireId('a'), WireId('b')],
+      outputWires: [WireId('out')],
+    );
+
+    _selectedCircuit = aliceCircuit1;
   }
 
-  (String, String) _calculateSharesOfInitialValues(int initialValue) {
-    final opponentValue = Random().nextInt(2);
-    final myValue = initialValue ^ opponentValue;
-    return (myValue.toString(), opponentValue.toString());
+  @override
+  void dispose() {
+    _protocolController.removeListener(_onProtocolChanged);
+    _aliceSecretController.dispose();
+    super.dispose();
+  }
+
+  void _onProtocolChanged() {
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('GMW protocol'),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
-        actions: [IconButton(onPressed: () => unawaited(_openSettingsMenu(context)), icon: const Icon(Icons.settings))],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
+    super.build(context);
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: SingleChildScrollView(
         child: Column(
-          spacing: 12,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text('Enter your function below', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text('Enter your secret number below', style: TextStyle(fontSize: 22)),
+            const SizedBox(height: 30),
             TextField(
-              controller: _functionController,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              keyboardType: TextInputType.text,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Text('Alice share (x): $_initialX', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text('Bob share (y): $_initialY', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Column(
-                  children: [
-                    Text('Xa = $_aliceXShare, Xb = $_bobXShare'),
-                    TextButton(
-                      onPressed: () {
-                        final tempXShare = _calculateSharesOfInitialValues(_initialX);
-                        _aliceXShare = tempXShare.$1;
-                        _bobXShare = tempXShare.$2;
-                        setState(() {});
-                      },
-                      child: const Text('Calculate X shares'),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Text('Ya = $_aliceYShare, Yb = $_bobYShare'),
-                    TextButton(
-                      onPressed: () {
-                        final tempYShare = _calculateSharesOfInitialValues(_initialY);
-                        _aliceYShare = tempYShare.$2;
-                        _bobYShare = tempYShare.$1;
-                        setState(() {});
-                      },
-                      child: const Text('Calculate Y shares'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            TextField(
-              controller: _firstController,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-
+              controller: _aliceSecretController,
+              onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
               keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: _secondController,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              keyboardType: TextInputType.number,
-            ),
-            Text('some output: $output', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            ElevatedButton(
-              onPressed: () {
-                _sum(_firstController.text, _secondController.text);
-                setState(() {});
-              },
-              child: const Text(
-                'Calculate',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
               ),
             ),
+            const SizedBox(height: 30),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircuitCard(
+                  label: 'Card 1',
+                  isSelected: _selectedCircuit == aliceCircuit1,
+                  onTap: () => setState(() => _selectedCircuit = aliceCircuit1),
+                ),
+                CircuitCard(
+                  label: 'Card 2 (a OR b)',
+                  isSelected: _selectedCircuit == aliceCircuit2,
+                  onTap: () => setState(() => _selectedCircuit = aliceCircuit2),
+                ),
+                CircuitCard(
+                  label: 'Card 3',
+                  isSelected: _selectedCircuit == aliceCircuit3,
+                  onTap: () => setState(() => _selectedCircuit = aliceCircuit3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                _protocolController.aliceCalculate(_aliceSecretController.text, _selectedCircuit);
+              },
+              style: const ButtonStyle(fixedSize: WidgetStatePropertyAll(Size(180, 120))),
+              child: const Text('Calculate', style: TextStyle(fontSize: 26)),
+            ),
+            // const SizedBox(height: 30),
+            // Text('Текущий статус: ${_protocolController.status}'),
+            const SizedBox(height: 30),
+            if (_protocolController.aliceResult != null) Text('Alice output: ${_protocolController.aliceResult}'),
           ],
         ),
       ),
@@ -138,14 +164,160 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class SettingDialog extends StatefulWidget {
-  const SettingDialog({super.key});
+class BobScreen extends StatefulWidget {
+  const BobScreen({super.key});
 
   @override
-  State<SettingDialog> createState() => _SettingDialogState();
+  State<BobScreen> createState() => _BobScreenState();
 }
 
-class _SettingDialogState extends State<SettingDialog> {
+class _BobScreenState extends State<BobScreen> with AutomaticKeepAliveClientMixin<BobScreen> {
+  late final ProtocolController _protocolController;
+  final _bobSecretController = TextEditingController();
+  late Circuit _selectedCircuit;
+  late final Circuit bobCircuit1;
+  late final Circuit bobCircuit2;
+  late final Circuit bobCircuit3;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _protocolController = kServiceLocator['protocolController']! as ProtocolController;
+    _protocolController.addListener(_onProtocolChanged);
+    bobCircuit1 = Circuit(
+      gates: [
+        XorGate(inputs: [WireId('a'), WireId('b')], output: WireId('xor_out')),
+        AndGate(inputs: [WireId('xor_out'), WireId('b')], output: WireId('out')),
+      ],
+      inputWires: [WireId('b'), WireId('a')],
+      outputWires: [WireId('out')],
+    );
+    bobCircuit2 = Circuit(
+      gates: [
+        XorGate(inputs: [WireId('a'), WireId('b')], output: WireId('xor_out')),
+        AndGate(inputs: [WireId('a'), WireId('b')], output: WireId('and_out')),
+        XorGate(inputs: [WireId('xor_out'), WireId('and_out')], output: WireId('out')),
+      ],
+      inputWires: [WireId('b'), WireId('a')],
+      outputWires: [WireId('out')],
+    );
+    bobCircuit3 = Circuit(
+      gates: [
+        XorGate(inputs: [WireId('a'), WireId('b')], output: WireId('xor_out')),
+        AndGate(inputs: [WireId('xor_out'), WireId('b')], output: WireId('out')),
+      ],
+      inputWires: [WireId('b'), WireId('a')],
+      outputWires: [WireId('out')],
+    );
+    _selectedCircuit = bobCircuit1;
+  }
+
+  @override
+  void dispose() {
+    _protocolController.removeListener(_onProtocolChanged);
+    _bobSecretController.dispose();
+    super.dispose();
+  }
+
+  void _onProtocolChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            const Text('Enter your secret number below', style: TextStyle(fontSize: 22)),
+            const SizedBox(height: 30),
+            TextField(
+              controller: _bobSecretController,
+              onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircuitCard(
+                  label: 'Card 1',
+                  isSelected: _selectedCircuit == bobCircuit1,
+                  onTap: () => setState(() => _selectedCircuit = bobCircuit1),
+                ),
+                CircuitCard(
+                  label: 'Card 2 (a OR b)',
+                  isSelected: _selectedCircuit == bobCircuit2,
+                  onTap: () => setState(() => _selectedCircuit = bobCircuit2),
+                ),
+                CircuitCard(
+                  label: 'Card 3',
+                  isSelected: _selectedCircuit == bobCircuit3,
+                  onTap: () => setState(() => _selectedCircuit = bobCircuit3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                _protocolController.bobCalculate(_bobSecretController.text, _selectedCircuit);
+              },
+              style: const ButtonStyle(fixedSize: WidgetStatePropertyAll(Size(180, 120))),
+              child: const Text('Calculate', style: TextStyle(fontSize: 26)),
+            ),
+            // const SizedBox(height: 30),
+            // Text('Текущий статус: ${_protocolController.status}'),
+            const SizedBox(height: 30),
+            if (_protocolController.bobResult != null) Text('Bob output: ${_protocolController.bobResult}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CircuitCard extends StatelessWidget {
+  const CircuitCard({required this.label, required this.isSelected, required this.onTap, super.key});
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: isSelected ? 8 : 2,
+      shape:
+          isSelected
+              ? RoundedRectangleBorder(
+                side: BorderSide(color: Theme.of(context).highlightColor, width: 2),
+                borderRadius: BorderRadius.circular(8),
+              )
+              : null,
+      child: InkWell(
+        splashColor: Theme.of(context).splashFactory == InkSparkle.splashFactory ? Theme.of(context).splashColor : null,
+        onTap: onTap,
+        child: SizedBox(width: 100, height: 80, child: Center(child: Text(label))),
+      ),
+    );
+  }
+}
+
+class SettingsDialog extends StatefulWidget {
+  const SettingsDialog({super.key});
+
+  @override
+  State<SettingsDialog> createState() => _SettingsDialogState();
+}
+
+class _SettingsDialogState extends State<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -168,7 +340,7 @@ class ThemeSwitchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = kServiceLocator[ThemeController]! as ThemeController;
+    final themeController = kServiceLocator['themeController']! as ThemeController;
     return Padding(
       padding: const EdgeInsets.all(10),
       child: ListenableBuilder(

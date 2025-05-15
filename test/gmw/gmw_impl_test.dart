@@ -3,19 +3,20 @@ import 'dart:async';
 import 'package:gmw_protocol/domain/gmw/gmw.dart';
 
 Future<void> main() async {
-  await impltest();
+  // await impltest();
+  await notXor();
 }
 
 Future<void> impltest() async {
   final alice = ParticipantId('alice');
   final bob = ParticipantId('bob');
+
   final aliceOt = ObliviousTransferBucketImpl(alice);
   final bobOt = ObliviousTransferBucketImpl(bob);
   final aliceSharer = SecretSharingImpl();
   final bobSharer = SecretSharingImpl();
-
-  final aliceSession = GMWSessionImpl(me: alice, peer: bob, sharer: aliceSharer, otProvider: aliceOt);
-  final bobSession = GMWSessionImpl(me: bob, peer: alice, sharer: bobSharer, otProvider: bobOt);
+  final aliceSession = GMWSession(me: alice, peer: bob, sharer: aliceSharer, otProvider: aliceOt);
+  final bobSession = GMWSession(me: bob, peer: alice, sharer: bobSharer, otProvider: bobOt);
 
   final aliceCircuit = Circuit(
     gates: [

@@ -1,1 +1,1 @@
-final kServiceLocator = <Type, Object>{};
+final kServiceLocator = <String, Object>{};
